@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>VPE Exporter</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <h1>VPE Exporter</h1>
+  <div class="container">
+    <div class="feature-row">
+      <span class="label">DCP Points</span>
+      <div class="actions">
+        <span id="status-dcp" class="status-icon" title="Data Saved">&#10004;</span>
+        <button id="nav-dcp" class="nav-btn" title="Go to Page">&#8594;</button>
+        <button id="save-dcp" class="save-btn" title="Save Data">&#128190;</button>
+      </div>
+    </div>
+
+    <div class="feature-row">
+      <span class="label">Paths in Progress</span>
+      <div class="actions">
+        <span id="status-paths" class="status-icon" title="Data Saved">&#10004;</span>
+        <button id="nav-paths" class="nav-btn" title="Go to Page">&#8594;</button>
+        <button id="save-paths" class="save-btn" title="Save Data">&#128190;</button>
+      </div>
+    </div>
+
+    <div class="feature-row">
+      <span class="label">Speaker Dates</span>
+      <div class="actions">
+        <span id="status-speakers" class="status-icon" title="Data Saved">&#10004;</span>
+        <button id="nav-speakers" class="nav-btn" title="Go to Page">&#8594;</button>
+        <button id="save-speakers" class="save-btn" title="Save Data">&#128190;</button>
+      </div>
+    </div>
+
+    <hr/>
+    
+    <button id="btn-export-final" class="full-width">Export Full Report</button>
+    <button id="btn-clear-data" class="full-width secondary">Clear Saved Data</button>
+  </div>
+  <div id="status"></div>
+  <script src="popup.js"></script>
+</body>
+</html>
