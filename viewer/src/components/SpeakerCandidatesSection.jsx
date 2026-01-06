@@ -1,12 +1,13 @@
-import React, { useMemo } from 'react';
-import { AlertCircle, Star } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Mic, Star } from 'lucide-react';
 
 const SpeakerCandidatesSection = ({ speakersData, pathsData }) => {
+  const [thresholdDays, setThresholdDays] = useState(28);
+
   const candidates = useMemo(() => {
     if (!speakersData?.speakers || !pathsData?.paths) return [];
 
     const today = new Date();
-    const THRESHOLD_DAYS = 28; // 4 weeks
 
     // Create a map of paths for quick lookup
     const pathsMap = new Map();
@@ -85,7 +86,7 @@ const SpeakerCandidatesSection = ({ speakersData, pathsData }) => {
       // And "flag that row if they are close to completing a level"
       // So the primary filter is "Haven't spoken in a while"
       
-      return item.daysSinceSpeech > THRESHOLD_DAYS;
+      return item.daysSinceSpeech > thresholdDays;
     })
     .sort((a, b) => {
       // Sort by:
@@ -114,67 +115,113 @@ const SpeakerCandidatesSection = ({ speakersData, pathsData }) => {
       return b.daysSinceSpeech - a.daysSinceSpeech;
     });
 
-  }, [speakersData, pathsData]);
+  }, [speakersData, pathsData, thresholdDays]);
 
-  if (!candidates.length) return <div style={{ textAlign: 'center', padding: '40px', color: '#6b7280' }}>No candidates found matching criteria.</div>;
+  if (!candidates.length) return (
+    <div style={{ backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
+       <div style={{ padding: '20px', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h3 style={{ margin: 0, color: '#111827' }}>Speaker Candidates</h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <label style={{ fontSize: '0.85rem', color: '#374151', fontWeight: '500' }}>
+              Threshold: {thresholdDays} days
+            </label>
+            <input 
+              type="range" 
+              min="7" 
+              max="90" 
+              value={thresholdDays} 
+              onChange={(e) => setThresholdDays(parseInt(e.target.value))}
+              style={{ width: '120px', cursor: 'pointer' }}
+            />
+        </div>
+      </div>
+      <div style={{ textAlign: 'center', padding: '40px', color: '#6b7280' }}>No candidates found matching criteria.</div>
+    </div>
+  );
 
   return (
     <div style={{ backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
       <div style={{ padding: '20px', borderBottom: '1px solid #e5e7eb' }}>
-        <h3 style={{ margin: 0, color: '#111827' }}>Speaker Candidates</h3>
-        <p style={{ margin: '5px 0 0 0', color: '#6b7280', fontSize: '0.9rem' }}>
-          Members who haven't spoken in 28+ days, highlighted if they are close to completing a level.
-        </p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <h3 style={{ margin: 0, color: '#111827' }}>Speaker Candidates</h3>
+            <p style={{ margin: '5px 0 0 0', color: '#6b7280', fontSize: '0.9rem' }}>
+              <strong>Tier 1 (Green):</strong> Close to level completion. <strong>Tier 2 (Blue):</strong> Ready for next speech.
+            </p>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '5px' }}>
+            <label style={{ fontSize: '0.85rem', color: '#374151', fontWeight: '500' }}>
+              Threshold: {thresholdDays} days
+            </label>
+            <input 
+              type="range" 
+              min="7" 
+              max="90" 
+              value={thresholdDays} 
+              onChange={(e) => setThresholdDays(parseInt(e.target.value))}
+              style={{ width: '150px', cursor: 'pointer' }}
+            />
+          </div>
+        </div>
       </div>
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead style={{ backgroundColor: '#f9fafb' }}>
           <tr>
             <th style={{ padding: '12px 20px', textAlign: 'left', fontSize: '0.85rem', color: '#6b7280', fontWeight: '600' }}>Name</th>
             <th style={{ padding: '12px 20px', textAlign: 'left', fontSize: '0.85rem', color: '#6b7280', fontWeight: '600' }}>Last Speech</th>
-            <th style={{ padding: '12px 20px', textAlign: 'left', fontSize: '0.85rem', color: '#6b7280', fontWeight: '600' }}>Opportunity</th>
+            <th style={{ padding: '12px 20px', textAlign: 'left', fontSize: '0.85rem', color: '#6b7280', fontWeight: '600' }}>Status</th>
           </tr>
         </thead>
         <tbody>
-          {candidates.map((candidate, idx) => (
-            <tr key={idx} style={{ borderBottom: '1px solid #e5e7eb', backgroundColor: candidate.opportunity ? '#f0fdf4' : 'white' }}>
-              <td style={{ padding: '16px 20px', color: '#111827', fontWeight: '500' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  {candidate.name}
-                  {candidate.opportunity && <Star size={16} color="#16a34a" fill="#16a34a" />}
-                </div>
-              </td>
-              <td style={{ padding: '16px 20px', color: '#374151' }}>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span>{candidate.lastSpeech || 'Never'}</span>
-                  <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>
-                    {candidate.daysSinceSpeech === Infinity ? 'No record' : `${candidate.daysSinceSpeech} days ago`}
-                  </span>
-                </div>
-              </td>
-              <td style={{ padding: '16px 20px' }}>
-                {candidate.opportunity ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <span style={{ fontWeight: '600', color: '#166534', fontSize: '0.9rem' }}>
-                      {candidate.opportunity.pathName}
-                    </span>
-                    <span style={{ fontSize: '0.85rem', color: '#15803d' }}>
-                      {candidate.opportunity.level}: {candidate.opportunity.status}
-                    </span>
-                    <div style={{ width: '100px', height: '6px', backgroundColor: '#bbf7d0', borderRadius: '9999px', marginTop: '4px' }}>
-                      <div style={{ 
-                        width: `${candidate.opportunity.percentage}%`, 
-                        height: '100%', 
-                        backgroundColor: '#16a34a', 
-                        borderRadius: '9999px' 
-                      }} />
-                    </div>
+          {candidates.map((candidate, idx) => {
+            const isTier1 = !!candidate.opportunity;
+            return (
+              <tr key={idx} style={{ borderBottom: '1px solid #e5e7eb', backgroundColor: isTier1 ? '#f0fdf4' : '#f0f9ff' }}>
+                <td style={{ padding: '16px 20px', color: '#111827', fontWeight: '500' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {candidate.name}
+                    {isTier1 ? (
+                      <Star size={16} color="#16a34a" fill="#16a34a" />
+                    ) : (
+                      <Mic size={16} color="#0284c7" />
+                    )}
                   </div>
-                ) : (
-                  <span style={{ color: '#9ca3af', fontSize: '0.85rem' }}>No active level progress</span>
-                )}
-              </td>
-            </tr>
-          ))}
+                </td>
+                <td style={{ padding: '16px 20px', color: '#374151' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span>{candidate.lastSpeech || 'Never'}</span>
+                    <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                      {candidate.daysSinceSpeech === Infinity ? 'No record' : `${candidate.daysSinceSpeech} days ago`}
+                    </span>
+                  </div>
+                </td>
+                <td style={{ padding: '16px 20px' }}>
+                  {isTier1 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <span style={{ fontWeight: '600', color: '#166534', fontSize: '0.9rem' }}>
+                        {candidate.opportunity.pathName}
+                      </span>
+                      <span style={{ fontSize: '0.85rem', color: '#15803d' }}>
+                        {candidate.opportunity.level}: {candidate.opportunity.status}
+                      </span>
+                      <div style={{ width: '100px', height: '6px', backgroundColor: '#bbf7d0', borderRadius: '9999px', marginTop: '4px' }}>
+                        <div style={{ 
+                          width: `${candidate.opportunity.percentage}%`, 
+                          height: '100%', 
+                          backgroundColor: '#16a34a', 
+                          borderRadius: '9999px' 
+                        }} />
+                      </div>
+                    </div>
+                  ) : (
+                    <span style={{ color: '#0369a1', fontSize: '0.85rem', fontWeight: '600' }}>
+                      Ready to Speak
+                    </span>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
