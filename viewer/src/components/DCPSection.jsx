@@ -50,48 +50,45 @@ const DCPSection = ({ data }) => {
           <h3 style={{ margin: '0 0 15px 0', color: '#111827', fontSize: '1.1rem' }}>Club Status Requirements</h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
             {data.summary.status.map((level, idx) => {
-              const goalsReq = parseInt(level.goals, 10) || 0;
-              const currentGoals = parseInt(goalsAchieved, 10) || 0;
-              const isGoalsMet = currentGoals >= goalsReq;
-              const progress = goalsReq > 0 ? Math.min(100, (currentGoals / goalsReq) * 100) : 0;
+              const isGoalsMet = level.goals.toLowerCase().includes('met');
+              const isMembershipMet = level.membership.toLowerCase().includes('met');
+              const isPlanMet = level.clubSuccessPlan ? level.clubSuccessPlan.toLowerCase().includes('met') : true; 
               
+              const isFullyMet = isGoalsMet && isMembershipMet && isPlanMet;
+
+              const StatusRow = ({ label, value }) => {
+                 if (!value) return null;
+                 const isMet = value.toString().toLowerCase().includes('met');
+                 const color = isMet ? '#047857' : '#b45309';
+                 return (
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginTop: '12px' }}>
+                        <div style={{ marginTop: '2px', flexShrink: 0 }}>
+                            {isMet ? <CheckCircle size={16} color={color} /> : <AlertCircle size={16} color={color} />}
+                        </div>
+                        <div>
+                            <span style={{ display: 'block', color: '#6b7280', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</span>
+                            <span style={{ color: color, fontWeight: '500', fontSize: '0.9rem' }}>{value}</span>
+                        </div>
+                    </div>
+                 );
+              };
+
               return (
                 <div key={idx} style={{ 
                   backgroundColor: 'white', 
                   borderRadius: '8px', 
                   padding: '20px',
                   boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                  borderTop: `4px solid ${isGoalsMet ? '#047857' : '#9ca3af'}`,
+                  borderTop: `4px solid ${isFullyMet ? '#047857' : '#e5e7eb'}`,
                   display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between'
+                  flexDirection: 'column'
                 }}>
-                  <div>
-                    <h4 style={{ margin: '0 0 15px 0', color: '#111827', fontSize: '1rem', fontWeight: '600' }}>{level.level}</h4>
-                    
-                    <div style={{ marginBottom: '15px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '0.85rem' }}>
-                        <span style={{ color: '#6b7280' }}>Goals Progress</span>
-                        <span style={{ fontWeight: '600', color: isGoalsMet ? '#047857' : '#111827' }}>
-                          {currentGoals} / {goalsReq}
-                        </span>
-                      </div>
-                      <div style={{ width: '100%', height: '8px', backgroundColor: '#f3f4f6', borderRadius: '9999px', overflow: 'hidden' }}>
-                        <div style={{ 
-                          width: `${progress}%`, 
-                          height: '100%', 
-                          backgroundColor: isGoalsMet ? '#047857' : '#004165', 
-                          borderRadius: '9999px',
-                          transition: 'width 0.5s ease-in-out'
-                        }} />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div style={{ fontSize: '0.85rem', paddingTop: '12px', borderTop: '1px solid #f3f4f6' }}>
-                    <span style={{ color: '#6b7280', display: 'block', marginBottom: '4px', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Membership Requirement</span>
-                    <span style={{ color: '#374151', fontWeight: '500', lineHeight: '1.4' }}>{level.membership}</span>
-                  </div>
+                  <h4 style={{ margin: '0 0 5px 0', color: '#111827', fontSize: '1.1rem', fontWeight: '700' }}>{level.level}</h4>
+                  <div style={{ height: '1px', backgroundColor: '#f3f4f6', margin: '10px 0' }} />
+                  
+                  <StatusRow label="Goals Requirement" value={level.goals} />
+                  <StatusRow label="Membership Requirement" value={level.membership} />
+                  <StatusRow label="Club Success Plan" value={level.clubSuccessPlan} />
                 </div>
               );
             })}
