@@ -28,7 +28,7 @@ export const mergeSpeakerData = (speakersData, agendaData, nameMappings = {}) =>
   
   if (!agendaData || !Array.isArray(agendaData)) return { merged: speakers, unmatched: [] };
 
-  const agendaMap = new Map(); // NormalizedName -> { date: Date, originalName: string }
+  const agendaMap = new Map(); // NormalizedName -> { dates: Date[], originalName: string }
 
   agendaData.forEach(row => {
     const rawDate = row['Date'];
@@ -48,16 +48,18 @@ export const mergeSpeakerData = (speakersData, agendaData, nameMappings = {}) =>
         const targetName = nameMappings[normalized] ? normalizeName(nameMappings[normalized]) : normalized;
 
         if (targetName) {
-          const existing = agendaMap.get(targetName);
-          if (!existing || date > existing.date) {
-            agendaMap.set(targetName, { date, originalName: name });
-          }
+            if (!agendaMap.has(targetName)) {
+                agendaMap.set(targetName, { dates: [], originalName: name });
+            }
+            agendaMap.get(targetName).dates.push(date);
         }
       }
     });
   });
 
   const matchedAgendaNames = new Set();
+  const today = new Date();
+  today.setHours(0,0,0,0);
 
   // Update speakers
   speakers.forEach(speaker => {
@@ -66,12 +68,27 @@ export const mergeSpeakerData = (speakersData, agendaData, nameMappings = {}) =>
     
     if (agendaEntry) {
       matchedAgendaNames.add(normalized);
+      
+      // Sort dates
+      const sortedDates = agendaEntry.dates.sort((a, b) => b - a);
+      const latestPast = sortedDates.find(d => d <= today);
+      // For future dates, we want the closest one (smallest greater than today)
+      const nextFuture = sortedDates.filter(d => d > today).sort((a, b) => a - b)[0];
+
       const currentLastSpeech = parseDate(speaker.lastSpeech);
       
-      // If agenda date is newer (or no current date), update it
-      if (!currentLastSpeech || agendaEntry.date > currentLastSpeech) {
-        speaker.lastSpeech = agendaEntry.date.toLocaleDateString(); // Format: MM/DD/YYYY default
-        speaker.source = 'Agenda'; // Flag for UI
+      // Update Last Speech (only if we have a newer past date)
+      if (latestPast) {
+        if (!currentLastSpeech || latestPast > currentLastSpeech) {
+            speaker.lastSpeech = latestPast.toLocaleDateString(); 
+            speaker.source = 'Agenda'; 
+        }
+      }
+
+      // Set Next Speech
+      if (nextFuture) {
+          speaker.nextSpeech = nextFuture.toLocaleDateString();
+          speaker.nextSpeechSource = 'Agenda';
       }
     }
   });
@@ -80,10 +97,12 @@ export const mergeSpeakerData = (speakersData, agendaData, nameMappings = {}) =>
   const unmatched = [];
   agendaMap.forEach((value, key) => {
     if (!matchedAgendaNames.has(key)) {
+      // Use latest date for display
+      const latestDate = value.dates.sort((a,b) => b-a)[0];
       unmatched.push({
         normalized: key,
         originalName: value.originalName,
-        date: value.date
+        date: latestDate
       });
     }
   });

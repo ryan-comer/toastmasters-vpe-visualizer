@@ -95,7 +95,8 @@ const SpeakersSection = ({ data }) => {
             <HeaderCell label="Name" columnKey="name" />
             <HeaderCell label="Credential" columnKey="credential" />
             <HeaderCell label="Highest Achievement" columnKey="highestAchievement" />
-            <HeaderCell label="Last Speech Date" columnKey="lastSpeech" />
+            <HeaderCell label="Last Speech" columnKey="lastSpeech" />
+            <HeaderCell label="Next Scheduled" columnKey="nextSpeech" />
           </tr>
         </thead>
         <tbody>
@@ -111,6 +112,9 @@ const SpeakersSection = ({ data }) => {
                         <FileText size={14} color="#6b7280" title="Source: Agenda CSV" />
                     )}
                 </div>
+              </td>
+              <td style={{ padding: '16px 20px', color: '#004165', fontWeight: '500' }}>
+                 {speaker.nextSpeech || '-'}
               </td>
             </tr>
           ))}

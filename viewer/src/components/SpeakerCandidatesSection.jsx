@@ -82,10 +82,10 @@ const SpeakerCandidatesSection = ({ speakersData, pathsData }) => {
     })
     .filter(item => {
       // Filter: Hasn't spoken in a while OR has an opportunity
-      // The user said: "lists those people who are good speaker candidates. This list should pick people who haven't spoken in a while"
-      // And "flag that row if they are close to completing a level"
-      // So the primary filter is "Haven't spoken in a while"
       
+      // If they have a next speech scheduled, they are not a candidate for a new one
+      if (item.nextSpeech) return false;
+
       return item.daysSinceSpeech > thresholdDays;
     })
     .sort((a, b) => {
