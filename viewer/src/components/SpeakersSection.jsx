@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { ArrowUpDown, ArrowUp, ArrowDown, FileText } from 'lucide-react';
 
 const SpeakersSection = ({ data }) => {
   const [sortConfig, setSortConfig] = useState({ key: 'lastSpeech', direction: 'descending' });
@@ -104,7 +104,14 @@ const SpeakersSection = ({ data }) => {
               <td style={{ padding: '16px 20px', color: '#111827', fontWeight: '500' }}>{speaker.name}</td>
               <td style={{ padding: '16px 20px', color: '#374151' }}>{speaker.credential || '-'}</td>
               <td style={{ padding: '16px 20px', color: '#374151' }}>{speaker.highestAchievement || '-'}</td>
-              <td style={{ padding: '16px 20px', color: '#374151' }}>{speaker.lastSpeech || 'Never'}</td>
+              <td style={{ padding: '16px 20px', color: '#374151' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {speaker.lastSpeech || 'Never'}
+                    {speaker.source === 'Agenda' && (
+                        <FileText size={14} color="#6b7280" title="Source: Agenda CSV" />
+                    )}
+                </div>
+              </td>
             </tr>
           ))}
         </tbody>

@@ -1,11 +1,55 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import DCPSection from './DCPSection';
 import PathsSection from './PathsSection';
 import SpeakersSection from './SpeakersSection';
 import SpeakerCandidatesSection from './SpeakerCandidatesSection';
+import NameMatcherSection from './NameMatcherSection';
+import { mergeSpeakerData } from '../utils/dataProcessing';
 
 const Dashboard = ({ data }) => {
   const [activeTab, setActiveTab] = useState('dcp');
+  const [nameMappings, setNameMappings] = useState({});
+
+  // Load mappings from local storage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('tm_name_mappings');
+      if (saved) {
+        setNameMappings(JSON.parse(saved));
+      }
+    } catch (e) {
+      console.error("Failed to load name mappings", e);
+    }
+  }, []);
+
+  // Save mappings to local storage whenever they change
+  const saveMapping = (normalizedKey, officialName) => {
+    const newMappings = { ...nameMappings, [normalizedKey]: officialName };
+    setNameMappings(newMappings);
+    localStorage.setItem('tm_name_mappings', JSON.stringify(newMappings));
+  };
+
+  const deleteMapping = (normalizedKey) => {
+    const newMappings = { ...nameMappings };
+    delete newMappings[normalizedKey];
+    setNameMappings(newMappings);
+    localStorage.setItem('tm_name_mappings', JSON.stringify(newMappings));
+  };
+
+  const { mergedSpeakers, unmatchedNames } = useMemo(() => {
+    // If we don't have speakers data yet, return empty defaults
+    if (!data.speakersData) return { merged: [], unmatched: [] };
+
+    const result = mergeSpeakerData(data.speakersData, data.agendaData, nameMappings);
+    return { 
+      mergedSpeakers: result.merged, 
+      unmatchedNames: result.unmatched 
+    };
+  }, [data.speakersData, data.agendaData, nameMappings]);
+
+  const enhancedSpeakersData = useMemo(() => {
+    return { ...data.speakersData, speakers: mergedSpeakers };
+  }, [data.speakersData, mergedSpeakers]);
 
   const tabs = [
     { id: 'dcp', label: 'DCP Points' },
@@ -13,6 +57,14 @@ const Dashboard = ({ data }) => {
     { id: 'speakers', label: 'Speaker Dates' },
     { id: 'candidates', label: 'Speaker Candidates' }
   ];
+
+  if (unmatchedNames && unmatchedNames.length > 0) {
+    tabs.push({ 
+      id: 'matching', 
+      label: `Name Matching (${unmatchedNames.length})`,
+      style: { color: '#ef4444', fontWeight: '600' } // Highlight this tab
+    });
+  }
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', backgroundColor: '#f3f4f6' }}>
@@ -51,10 +103,11 @@ const Dashboard = ({ data }) => {
               border: 'none',
               borderBottom: activeTab === tab.id ? '2px solid #004165' : '2px solid transparent',
               color: activeTab === tab.id ? '#004165' : '#6b7280',
-              fontWeight: activeTab === tab.id ? '600' : '400',
+              fontWeight: activeTab === tab.id ? '600' : '500',
               cursor: 'pointer',
               fontSize: '0.95rem',
-              transition: 'all 0.2s'
+              transition: 'all 0.2s',
+              ...(tab.style || {})
             }}
           >
             {tab.label}
@@ -67,8 +120,17 @@ const Dashboard = ({ data }) => {
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           {activeTab === 'dcp' && <DCPSection data={data.dcpData} />}
           {activeTab === 'paths' && <PathsSection data={data.pathsData} />}
-          {activeTab === 'speakers' && <SpeakersSection data={data.speakersData} />}
-          {activeTab === 'candidates' && <SpeakerCandidatesSection speakersData={data.speakersData} pathsData={data.pathsData} />}
+          {activeTab === 'speakers' && <SpeakersSection data={enhancedSpeakersData} />}
+          {activeTab === 'candidates' && <SpeakerCandidatesSection speakersData={enhancedSpeakersData} pathsData={data.pathsData} />}
+          {activeTab === 'matching' && (
+            <NameMatcherSection 
+              unmatchedNames={unmatchedNames}
+              allOfficialSpeakers={data.speakersData?.speakers || []} 
+              nameMappings={nameMappings}
+              onSaveMapping={saveMapping}
+              onDeleteMapping={deleteMapping}
+            />
+          )}
         </div>
       </div>
     </div>
